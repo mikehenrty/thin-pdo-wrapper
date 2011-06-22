@@ -7,7 +7,7 @@
  * Distributed under the terms of the MIT License.
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright  2010-2011 Michael Henretty <micahel.henretty@gmail.com>
+ * @copyright  2010-2011 Michael Henretty <michael.henretty@gmail.com>
  * @license    http://www.opensource.org/licenses/mit-license.php The MIT License
  * @link       http://github.com/mikehenrty/thin-pdo-wrapper
  */
