@@ -18,13 +18,13 @@ A simple database client utilizing PHP PDO.
 
 ### Selecting
 ```
-  $results = DatabaseWrapper::instance()->select('post', array('thread_id'=>$thread_id));
-  $results = DatabaseWrapper::instance()->select('thread', array('open'=>0), $limit+1, $start, array('favs'=>'DESC'));
+  $results = PDOWrapper::instance()->select('post', array('thread_id'=>$thread_id));
+  $results = PDOWrapper::instance()->select('thread', array('open'=>0), $limit+1, $start, array('favs'=>'DESC'));
 ```
 
 ### Inserting
 ```
-  $invite_id = $db->insert('invite', array(
+  $invite_id = PDOWrapper::instance()->insert('invite', array(
     'user_id' => $user_id,
     'text' => $text,
     'invite_key' => $invite_key
@@ -33,7 +33,7 @@ A simple database client utilizing PHP PDO.
 
 ### Complex Queries with bind parameters
 ```
-  $post = $db->queryFirst('
+  $post = PDOWrapper::instance()->queryFirst('
     SELECT invite.*, user.name FROM invite
     LEFT JOIN user ON user.id=invite.user_id
     WHERE invite_key=:invite_key
