@@ -13,6 +13,38 @@ A simple database client utilizing PHP PDO.
 - Fallback to custom queries if one needs to do a join or second order query.
 - Deals exclusively with associative arrays for input/output
 
+## Configuration
+
+### Master
+```
+  $pdo->configMaster(
+    'myhostname.example',
+    'my_database_name',
+    'my_database_user',
+    'my_database_password',
+    'my_database_port' // optional
+  );
+```
+
+### Slaves (optional)
+```
+  $pdo->configSlave(
+    'myhostname1.example',
+    'my_database_name',
+    'my_database_user',
+    'my_database_password',
+    'my_database_port' // optional
+  );
+
+  $pdo->configSlave(
+    'myhostname2.example',
+    'my_database_name',
+    'my_database_user',
+    'my_database_password',
+    'my_database_port' // optional
+  );
+  // etc
+```
 
 ## Examples
 

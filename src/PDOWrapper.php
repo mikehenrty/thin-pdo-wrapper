@@ -18,13 +18,13 @@
  *
  * @package PDO Wrapper
  * @author Michael Henretty - 08/24/2010
- * @version 1.0
+ * @version 1.1
  */
- class PDOWrapper {
- 	const LOG_ERRORS = true;
- 	
- 	/**
-	 * Database configuration
+class PDOWrapper {
+	
+	
+	/**
+	 * Hardcoded database configuration
 	 */	
 	const DB_HOST_MASTER = '';
 	const DB_NAME_MASTER = '';
@@ -45,6 +45,34 @@
 	const SLAVE2_PORT = '';
 	// note: to add more, stick with the naming convention
 	
+	/**
+	 * Write all errors to error log
+	 * 
+	 * @var boolean
+	 */
+	public static $LOG_ERRORS = true;
+
+	/**
+	 * Automatically add/update created/updated fields
+	 * 
+	 * @var boolean
+	 */
+	public static $TIMESTAMP_WRITES = false;
+
+	/**
+	 * Dynamic master config creds
+	 * 
+	 * @var Array - representing config details
+	 */
+	protected $config_master;
+
+	/**
+	 * Dynamic slave config creds
+	 * 
+	 * @var Array of Arrays - associative arrays of slave creds
+	 */
+	protected $config_slaves;
+
 	/**
 	 * The PDO objects for the master connection
 	 *
@@ -96,8 +124,61 @@
 	 * 	- make protected so only subclasses and self can create this object (singleton)
 	 */
 	protected function __construct() {}
-	
-	
+
+	/**
+	 * method configMaster
+	 * 	- configure connection credentials to the master db server
+	 * 	
+	 * @param host - the host name of the db to connect to
+	 * @param name - the database name
+	 * @param user - the user name
+	 * @param password - the users password
+	 * @param port (optional) - the port to connect using, default to 3306
+	 */
+	public function configMaster($host, $name, $user, $password, $port=null) {
+		if (isset($this->pdo_master)) {
+			error_log('DATABASE WRAPPER::warning, attempting to config master after connection exists');
+		}
+
+		$this->config_master = array(
+			'host' => $host,
+			'name' => $name,
+			'user' => $user,
+			'password' => $password,
+			'port' => $port
+		);
+	}
+
+
+	/**
+	 * method configSlave
+	 * 	- configure a connection to a slave (can be called multiple times)
+	 * 	
+	 * @param host - the host name of the db to connect to
+	 * @param name - the database name
+	 * @param user - the user name
+	 * @param password - the users password
+	 * @param port (optional) - the port to connect using, default to 3306
+	 */
+	public function configSlave($host, $name, $user, $password, $port=null) {
+		if (isset($this->pdo_slave)) {
+			error_log('DATABASE WRAPPER::warning, attempting to config slave after connection exists');
+		}
+
+		if (!isset($this->config_slaves)) {
+			$this->config_slaves = array();
+		}
+
+		$this->config_slaves[] = array(
+			'host' => $host,
+			'name' => $name,
+			'user' => $user,
+			'password' => $password,
+			'port' => $port
+		);
+	}
+
+
 	/**
 	 * method createConnection.
 	 * 	- create a PDO connection using the credentials provided
@@ -133,14 +214,14 @@
 		
 		// handle any exceptions by catching them and returning false
 		catch (PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -154,9 +235,26 @@
 	 * 	- grab the PDO connection to the master DB
 	 */
 	protected function getMaster() {
+		// if we have not been configured, use hard coded values
+		if (!isset($this->config_master)) {
+			$this->config_master = array(
+				'host' => self::DB_HOST_MASTER,
+				'name' => self::DB_NAME_MASTER,
+				'user' => self::DB_USER_MASTER,
+				'password' => self::DB_PASSWORD_MASTER,
+				'port' => self::DB_PORT_MASTER
+			);
+		}
+
 		// if we have not created the master db connection yet, create it now
 		if (!isset($this->pdo_master)) {
-			$this->pdo_master = $this->createConnection(self::DB_HOST_MASTER, self::DB_NAME_MASTER, self::DB_USER_MASTER, self::DB_PASSWORD_MASTER, self::DB_PORT_MASTER);
+			$this->pdo_master = $this->createConnection(
+				$this->config_master['host'],
+				$this->config_master['name'],
+				$this->config_master['user'],
+				$this->config_master['password'],
+				$this->config_master['port']
+			);
 		}
 		
 		return $this->pdo_master;
@@ -170,37 +268,37 @@
 		// if we have not created a slave db connection, create it now
 		if (!isset($this->pdo_slave)) {
 			
-			// get an array of all configured slaves
-			$slaves = array();
-			if (!empty(self::SLAVE1_HOST)) {
-				$slaves[] = array(
-					'host' => self::SLAVE1_HOST,
-					'name' => self::SLAVE1_NAME,
-					'user' => self::SLAVE1_USER,
-					'password' => self::SLAVE1_PASSWORD,
-					'port' => self::SLAVE1_PORT
-				);
+			// if no slaves were configured, use hardcoded values
+			if (!isset($this->config_slaves)) {
+				$i = 1;
+				while (defined('self::SLAVE' . $i . '_HOST') 
+					&& constant('self::SLAVE' . $i . '_HOST')) {
+					$this->config_slaves[] = array(
+						'host' => constant('self::SLAVE' . $i . '_HOST'),
+						'name' => constant('self::SLAVE' . $i . '_NAME'),
+						'user' => constant('self::SLAVE' . $i . '_USER'),
+						'password' => constant('self::SLAVE' . $i . '_PASSWORD'),
+						'port' => constant('self::SLAVE' . $i . '_PORT'),
+					);
+					$i++;
+				}
 			}
-			if (self::SLAVE2_HOST) {
-				$slaves[] = array(
-					'host' => self::SLAVE2_HOST,
-					'name' => self::SLAVE2_NAME,
-					'user' => self::SLAVE2_USER,
-					'password' => self::SLAVE2_PASSWORD,
-					'port' => self::SLAVE2_PORT
-				);
-			}
-			// etc...
 			
 			// if no slaves are configured, use the master connection
-			if (empty($slaves)) {
+			if (empty($this->config_slaves)) {
 				$this->pdo_slave = $this->getMaster();
 			}
 			
 			// if we have slaves, randomly choose one to use for this request and connect
 			else {
-				$random_slave = $slaves[array_rand($slaves)];
-				$this->pdo_slave = $this->createConnection($random_slave['host'], $random_slave['name'], $random_slave['user'], $random_slave['password'], $random_slave['port']);
+				$random_slave = $this->config_slaves[array_rand($this->config_slaves)];
+				$this->pdo_slave = $this->createConnection(
+					$random_slave['host'],
+					$random_slave['name'],
+					$random_slave['user'],
+					$random_slave['password'],
+					$random_slave['port']
+				);
 			}
 		}
 		
@@ -285,14 +383,14 @@
 			}
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -389,14 +487,14 @@
 			return ($successful_delete == true) ? $pstmt->rowCount() : false;
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -414,8 +512,10 @@
 	 * @param bool $timestamp_this (Optional) - if true we set date_created and date_modified values to now
 	 * @return int|bool - the amount of rows updated, false on failure
 	 */
-	public function update($table, $params, $wheres=array(), $timestamp_this=true) {
-		
+	public function update($table, $params, $wheres=array(), $timestamp_this=null) {
+		if (is_null($timestamp_this)) {
+			$timestamp_this = self::$TIMESTAMP_WRITES;
+		}
 		// build the set part of the update query by
 		// adding each parameter into the set query string
 		$add_comma = false;
@@ -473,14 +573,14 @@
 			return ($successful_update == true) ? $pstmt->rowCount() : false;
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -497,7 +597,11 @@
 	 * @param bool $timestamp_this (Optional), if true we set date_created and date_modified values to now
 	 * @return mixed - new primary key of inserted table, false on failure
 	 */
-	public function insert($table, $params = array(), $timestamp_this = true) {
+	public function insert($table, $params = array(), $timestamp_this = null) {
+		if (is_null($timestamp_this)) {
+			$timestamp_this = self::$TIMESTAMP_WRITES;
+		}
+
 		// first we build the sql query string
 		$columns_str = '(';
 		$values_str = 'VALUES (';
@@ -547,14 +651,14 @@
 			return $newID;
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -571,7 +675,11 @@
 	 * @param bool $timestamp_these (Optional), if true we set date_created and date_modified values to NOW() for each row
 	 * @return mixed - new primary key of inserted table, false on failure
 	 */
-	public function insertMultiple($table, $columns = array(), $rows = array(), $timestamp_these = true) {
+	public function insertMultiple($table, $columns = array(), $rows = array(), $timestamp_these = null) {
+		if (is_null($timestamp_these)) {
+			$timestamp_these = self::$TIMESTAMP_WRITES;
+		}
+
 		// generate the columns portion of the insert statment
 		// adding the timestamp fields if needs be
 		if ($timestamp_these) {
@@ -632,7 +740,7 @@
 			return true;
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -640,7 +748,7 @@
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -677,14 +785,14 @@
 			return ($result == true) ? $pstmt->rowCount() : false;
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -720,14 +828,14 @@
 			return $pstmt->fetchAll(PDO::FETCH_ASSOC);
 		}
 		catch(PDOException $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
-			if (self::LOG_ERRORS == true) {
+			if (self::$LOG_ERRORS == true) {
 				error_log('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
@@ -781,5 +889,5 @@
 	function __destruct() {
 		unset($this->pdo_master);
 		unset($this->pdo_slave);
-    }
- }
+	}
+}
