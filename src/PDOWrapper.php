@@ -12,7 +12,6 @@
  * @link       http://github.com/mikehenrty/thin-pdo-wrapper
  */
 
-
 /**
  * Wrapper object for a PDO connection to the database
  *
