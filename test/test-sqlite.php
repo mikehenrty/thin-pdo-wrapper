@@ -2,9 +2,10 @@
 require('../src/PDOWrapper.php');
 $rand = rand();
 $pdo = PDOWrapper::instance();
-$pdo->configMaster('mysql', 'localhost', 'test', 'root', '');
-$pdo->configSlave('mysql', 'localhost', 'test', 'root', '');
+$pdo->configMaster('sqlite', '/var/www/db/test.sqlite', '', '', '');
+$pdo->configSlave('sqlite', '/var/www/db/test.sqlite', '', '', '');
 $pdo->insert('pdo_test', array(
+
 	'name' => 'bob'.$rand,
 	'email' => 'bob'.$rand.'@email.com'
 ));

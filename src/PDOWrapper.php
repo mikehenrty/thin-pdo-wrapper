@@ -12,7 +12,6 @@
  * @link       http://github.com/mikehenrty/thin-pdo-wrapper
  */
 
-
 /**
  * Wrapper object for a PDO connection to the database
  *
@@ -25,19 +24,22 @@ class PDOWrapper {
 	
 	/**
 	 * Hardcoded database configuration
-	 */	
+	 */
+	const DB_DSN_PREFIX_MASTER = '';
 	const DB_HOST_MASTER = '';
 	const DB_NAME_MASTER = '';
 	const DB_USER_MASTER = '';
 	const DB_PASSWORD_MASTER = '';
 	const DB_PORT_MASTER = '';
 	
+	const SLAVE1_DSN_PREFIX = '';
 	const SLAVE1_HOST = '';
 	const SLAVE1_NAME = '';
 	const SLAVE1_USER = '';
 	const SLAVE1_PASSWORD = '';
 	const SLAVE1_PORT = '';
 	
+	const SLAVE2_DSN_PREFIX = '';
 	const SLAVE2_HOST = '';
 	const SLAVE2_NAME = '';
 	const SLAVE2_USER = '';
@@ -134,13 +136,19 @@ class PDOWrapper {
 	 * @param user - the user name
 	 * @param password - the users password
 	 * @param port (optional) - the port to connect using, default to 3306
+	 * @param driver - the dsn prefix
 	 */
-	public function configMaster($host, $name, $user, $password, $port=null) {
+	public function configMaster($host, $name, $user, $password, $port=null, $driver='mysql') {
+		if (!$this->validateDriver($driver)) {
+			throw new Exception('DATABASE WRAPPER::error, the database you wish to connect to is not supported by your install of PHP.');
+		}
+
 		if (isset($this->pdo_master)) {
 			error_log('DATABASE WRAPPER::warning, attempting to config master after connection exists');
 		}
 
 		$this->config_master = array(
+			'driver' => $driver,
 			'host' => $host,
 			'name' => $name,
 			'user' => $user,
@@ -153,14 +161,19 @@ class PDOWrapper {
 	/**
 	 * method configSlave
 	 * 	- configure a connection to a slave (can be called multiple times)
-	 * 	
+	 * 
 	 * @param host - the host name of the db to connect to
 	 * @param name - the database name
 	 * @param user - the user name
 	 * @param password - the users password
 	 * @param port (optional) - the port to connect using, default to 3306
+	 * @param driver - the dsn prefix
 	 */
-	public function configSlave($host, $name, $user, $password, $port=null) {
+	public function configSlave($host, $name, $user, $password, $port=null, $driver='mysql') {
+		if (!$this->validateDriver($driver)) {
+			throw new Exception('DATABASE WRAPPER::error, the database you wish to connect to is not supported by your install of PHP.');
+		}
+        
 		if (isset($this->pdo_slave)) {
 			error_log('DATABASE WRAPPER::warning, attempting to config slave after connection exists');
 		}
@@ -170,6 +183,7 @@ class PDOWrapper {
 		}
 
 		$this->config_slaves[] = array(
+			'driver' => $driver,
 			'host' => $host,
 			'name' => $name,
 			'user' => $user,
@@ -183,6 +197,7 @@ class PDOWrapper {
 	 * method createConnection.
 	 * 	- create a PDO connection using the credentials provided
 	 * 
+     * @param driver - the dsn prefix
 	 * @param host - the host name of the db to connect to
 	 * @param name - the database name
 	 * @param user - the user name
@@ -190,12 +205,24 @@ class PDOWrapper {
 	 * @param port (optional) - the port to connect using, default to 3306
 	 * @return PDO object with a connection to the database specified
 	 */
-	protected function createConnection($host, $name, $user, $password, $port=null) {
-		
+	protected function createConnection($driver, $host, $name, $user, $password, $port=null) {
+		if (!$this->validateDriver($driver)) {
+			throw new Exception('DATABASE WRAPPER::error, the database you wish to connect to is not supported by your install of PHP.');
+		}
+        
 		// attempt to create pdo object and connect to the database
 		try {
-			// bulild the connection string from static constants
-			$connection_string = 'mysql:host='.$host.';dbname='.$name.';';
+			//@TODO the following drivers are NOT supported yet: odbc, ibm, informix, 4D
+			// build the connection string from static constants based on the selected PDO Driver.
+			if ($driver == "sqlite" || $driver == "sqlite2") {
+				$connection_string = $driver.':'.$host;
+			} elseif ($driver == "sqlsrv") {
+				$connection_string = "sqlsrv:Server=".$host.";Database=".$name;
+			} elseif ($driver == "firebird" || $driver == "oci") {
+				$connection_string = $driver.":dbname=".$name;
+			} else {
+				$connection_string = $driver.':host='.$host.';dbname='.$name;
+			}
 			
 			// add the port if one was specified
 			if (!empty($port)) {
@@ -238,6 +265,7 @@ class PDOWrapper {
 		// if we have not been configured, use hard coded values
 		if (!isset($this->config_master)) {
 			$this->config_master = array(
+				'driver' => self::DB_DSN_PREFIX_MASTER,
 				'host' => self::DB_HOST_MASTER,
 				'name' => self::DB_NAME_MASTER,
 				'user' => self::DB_USER_MASTER,
@@ -249,6 +277,7 @@ class PDOWrapper {
 		// if we have not created the master db connection yet, create it now
 		if (!isset($this->pdo_master)) {
 			$this->pdo_master = $this->createConnection(
+				$this->config_master['driver'],
 				$this->config_master['host'],
 				$this->config_master['name'],
 				$this->config_master['user'],
@@ -274,6 +303,7 @@ class PDOWrapper {
 				while (defined('self::SLAVE' . $i . '_HOST') 
 					&& constant('self::SLAVE' . $i . '_HOST')) {
 					$this->config_slaves[] = array(
+						'driver' => constant('self::SLAVE' . $i . '_DSN_PREFIX'),
 						'host' => constant('self::SLAVE' . $i . '_HOST'),
 						'name' => constant('self::SLAVE' . $i . '_NAME'),
 						'user' => constant('self::SLAVE' . $i . '_USER'),
@@ -293,6 +323,7 @@ class PDOWrapper {
 			else {
 				$random_slave = $this->config_slaves[array_rand($this->config_slaves)];
 				$this->pdo_slave = $this->createConnection(
+					$random_slave['driver'],
 					$random_slave['host'],
 					$random_slave['name'],
 					$random_slave['user'],
@@ -355,16 +386,20 @@ class PDOWrapper {
 			}
 		}
 		
-		// add the limit clause if we have one
-		if (!is_null($limit)) {
-			$sql_str .= ' LIMIT '.(!is_null($start) ? "$start, ": '')."$limit";
-		}
-		
 		// now we attempt to retrieve the row using the sql string
 		try {
 			
 			// decide which database we are selecting from
 			$pdo_connection = $use_master ? $this->getMaster() : $this->getSlave();
+            $pdoDriver = $pdo_connection->getAttribute(PDO::ATTR_DRIVER_NAME);
+            
+			//@TODO MS SQL Server & Oracle handle LIMITs differently, for now its disabled but we should address it later.
+			$disableLimit = array("sqlsrv", "mssql", "oci");
+            
+			// add the limit clause if we have one
+			if (!is_null($limit) && !in_array($pdoDriver, $disableLimit)) {
+				$sql_str .= ' LIMIT '.(!is_null($start) ? "$start, ": '')."$limit";
+			}
 			
 			$pstmt = $pdo_connection->prepare($sql_str);
 			
@@ -881,6 +916,18 @@ class PDOWrapper {
 		return $this->pdo_exception;
 	}
 	
+	/**
+	 * Validate the database in question is supported by your installation of PHP.
+	 * @param string $driver The DSN prefix
+	 * @return boolean true, the database is supported; false, the database is not supported.
+	 */
+	private function validateDriver($driver) {
+		if (!in_array($driver, PDO::getAvailableDrivers())) {
+			return false;
+		} else {
+			return true;
+		}
+	}
 	
 	/**
 	 * Destructor.
