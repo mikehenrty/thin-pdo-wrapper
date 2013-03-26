@@ -2,8 +2,8 @@
 require('../src/PDOWrapper.php');
 $rand = rand();
 $pdo = PDOWrapper::instance();
-$pdo->configMaster('pgsql', 'localhost', 'test', 'postgres', '');
-$pdo->configSlave('pgsql', 'localhost', 'test', 'postgres', '');
+$pdo->configMaster('localhost', 'test', 'mikehenrty', '', null, 'pgsql');
+$pdo->configSlave('localhost', 'test', 'mikehenrty', '', null, 'pgsql');
 $pdo->insert('pdo_test', array(
 	'name' => 'greg'.$rand,
 	'email' => 'greg'.$rand.'@email.com'
