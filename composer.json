@@ -1,0 +1,23 @@
+{
+    "name": "mikehenrty/thin-pdo-wrapper",
+    "description": "A simple database abstraction for using PDO with MySQL, Postgres, and SQLite.",
+    "keywords": ["PDO", "MySQL", "Postgres", "SQLite", "database", "db", "thin", "wrapper"],
+    "homepage": "https://github.com/mikehenrty/thin-pdo-wrapper",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Michael Henretty",
+            "email": "michael.henretty@gmail.com",
+            "homepage": "http://github.com/mikehenrty",
+            "role": "developer"
+        },
+        {
+            "name": "eman1986",
+            "homepage": "http://github.com/eman1986",
+            "role": "developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.0"
+    }
+}
