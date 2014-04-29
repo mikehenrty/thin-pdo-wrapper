@@ -2,8 +2,13 @@
 require('../src/PDOWrapper.php');
 $rand = rand();
 $pdo = PDOWrapper::instance();
-$pdo->configMaster('localhost', 'test', 'root', '');
-$pdo->configSlave('localhost', 'test', 'root', '');
+$pdo->configMaster('localhost', 'test', 'root', '', 3306);
+$pdo->configSlave('localhost', 'test', 'root', '', 3306);
+$pdo->execute('CREATE TABLE IF NOT EXISTS pdo_test(
+                 id INT NOT NULL AUTO_INCREMENT,
+                 name VARCHAR(100) NOT NULL,
+                 email VARCHAR(100) NOT NULL,
+                 PRIMARY KEY (id));');
 $pdo->insert('pdo_test', array(
 	'name' => 'bob'.$rand,
 	'email' => 'bob'.$rand.'@email.com'

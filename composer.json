@@ -15,6 +15,11 @@
             "name": "eman1986",
             "homepage": "http://github.com/eman1986",
             "role": "developer"
+        },
+        {
+            "name": "tohirsolomons",
+            "homepage": "http://github.com/tohirsolomons",
+            "role": "developer"
         }
     ],
     "require": {
