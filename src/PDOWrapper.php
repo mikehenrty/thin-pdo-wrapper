@@ -226,7 +226,7 @@ class PDOWrapper {
 			
 			// add the port if one was specified
 			if (!empty($port)) {
-				$connection_string .= "port=$port";
+				$connection_string .= ";port=$port";
 			}
 			
 			// initialize the PDO object
