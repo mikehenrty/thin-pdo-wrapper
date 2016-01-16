@@ -144,7 +144,7 @@ class PDOWrapper {
 		}
 
 		if (isset($this->pdo_master)) {
-			error_log('DATABASE WRAPPER::warning, attempting to config master after connection exists');
+			$this->error('DATABASE WRAPPER::warning, attempting to config master after connection exists');
 		}
 
 		$this->config_master = array(
@@ -175,7 +175,7 @@ class PDOWrapper {
 		}
         
 		if (isset($this->pdo_slave)) {
-			error_log('DATABASE WRAPPER::warning, attempting to config slave after connection exists');
+			$this->error('DATABASE WRAPPER::warning, attempting to config slave after connection exists');
 		}
 
 		if (!isset($this->config_slaves)) {
@@ -242,14 +242,14 @@ class PDOWrapper {
 		// handle any exceptions by catching them and returning false
 		catch (PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -419,14 +419,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -523,14 +523,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -609,14 +609,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -687,14 +687,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -776,7 +776,7 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			$this->getMaster()->rollback();
@@ -784,7 +784,7 @@ class PDOWrapper {
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			$this->getMaster()->rollback();
@@ -821,14 +821,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -864,14 +864,14 @@ class PDOWrapper {
 		}
 		catch(PDOException $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
 		}
 		catch(Exception $e) {
 			if (self::$LOG_ERRORS == true) {
-				error_log('DATABASE WRAPPER::'.print_r($e, true));
+				$this->error('DATABASE WRAPPER::'.print_r($e, true));
 			}
 			$this->pdo_exception = $e;
 			return false;
@@ -914,6 +914,11 @@ class PDOWrapper {
 	 */
 	public function getPDOException() {
 		return $this->pdo_exception;
+	}
+
+	public function error($message){
+		//error_log($message);
+		echo $message;
 	}
 	
 	/**
