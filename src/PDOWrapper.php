@@ -2,22 +2,22 @@
 /**
  * Thin PDO Wrapper: A simple database client utilizing PHP PDO.
  *
- * Copyright (c) 20010-2011 Michael Henretty
+ * Copyright (c) 20010-2011 Louis Stowasser
  *
  * Distributed under the terms of the MIT License.
  * Redistributions of files must retain the above copyright notice.
  *
- * @copyright  2010-2011 Michael Henretty <michael.henretty@gmail.com>
+ * @copyright  2010-2011 Louis Stowasser <louisstow@gmail.com>
  * @license    http://www.opensource.org/licenses/mit-license.php The MIT License
- * @link       http://github.com/mikehenrty/thin-pdo-wrapper
+ * @link       http://github.com/louisstow/thin-pdo-wrapper
  */
 
 /**
  * Wrapper object for a PDO connection to the database
  *
  * @package PDO Wrapper
- * @author Michael Henretty - 08/24/2010
- * @version 1.1
+ * @author Louis Stowasser - 08/24/2010
+ * @version 1.2
  */
 class PDOWrapper {
 	
